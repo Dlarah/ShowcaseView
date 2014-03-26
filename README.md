@@ -47,7 +47,7 @@ ShowcaseView.insertShowcaseView(target, this, R.string.showcase_title, R.string.
 Copyright and Licensing
 ----
 
-This is a fork from Alex Curran's progect. 
+This is a fork from Alex Curran's project. 
 All changes here are made by Aleksander Abashin © 2014 All rights reserved.
 
 This library is distributed under an Apache 2.0 License.
