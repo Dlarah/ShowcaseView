@@ -1,4 +1,4 @@
-ShowcaseView library
+﻿ShowcaseView library
 ====
   
 The ShowcaseView library is designed to highlight and showcase specific parts of apps to the user with a distinctive and attractive overlay. This library is great for pointing out points of interest for users, gestures, or obscure but useful items.
@@ -47,6 +47,7 @@ ShowcaseView.insertShowcaseView(target, this, R.string.showcase_title, R.string.
 Copyright and Licensing
 ----
 
-Copyright Alex Curran ([+Alex](https://plus.google.com/110510888639261520925/posts)) © 2012. All rights reserved.
+This is a fork from Alex Curran's progect. 
+All changes here are made by Aleksander Abashin © 2014 All rights reserved.
 
 This library is distributed under an Apache 2.0 License.
