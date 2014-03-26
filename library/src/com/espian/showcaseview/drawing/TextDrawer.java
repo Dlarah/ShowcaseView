@@ -10,7 +10,7 @@ import android.graphics.Canvas;
  */
 public interface TextDrawer {
 
-    void draw(Canvas canvas, boolean hasPositionChanged);
+    void draw(Canvas canvas, boolean hasPositionChanged, int backColor);
 
     void setDetails(CharSequence details);
 
@@ -21,4 +21,8 @@ public interface TextDrawer {
     void setTitleStyling(Context context, int styleId);
 
     void setDetailStyling(Context context, int styleId);
+    
+    public float[] getTextAreaSize();
+    
+    public float[] getBestTextPosition();
 }

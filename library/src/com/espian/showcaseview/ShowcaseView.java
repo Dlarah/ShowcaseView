@@ -1,6 +1,7 @@
 package com.espian.showcaseview;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
@@ -11,6 +12,7 @@ import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.graphics.RectF;
 import android.graphics.Region.Op;
 import android.os.Build;
 import android.util.AttributeSet;
@@ -24,6 +26,7 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.Button;
 import android.widget.RelativeLayout;
+import android.widget.ViewSwitcher;
 
 import com.espian.showcaseview.actionbar.ActionBarViewWrapper;
 import com.espian.showcaseview.actionbar.reflection.BaseReflector;
@@ -74,13 +77,15 @@ public class ShowcaseView extends RelativeLayout
     private ConfigOptions mOptions;
     private int mBackgroundColor;
     private View mHandy;
+    private ViewSwitcher vSwitcher;
     private final Button mEndButton;
     OnShowcaseEventListener mEventListener = OnShowcaseEventListener.NONE;
     private boolean mAlteredText = false;
 
     private final String buttonText;
 
-    private float scaleMultiplier = 1f;
+//    private float scaleMultiplier = 1f;
+    private float[] scaleXYMultiplier = new float[] {1f, 1f};
     private TextDrawer mTextDrawer;
     private ClingDrawer mShowcaseDrawer;
 
@@ -121,13 +126,14 @@ public class ShowcaseView extends RelativeLayout
 
         metricScale = getContext().getResources().getDisplayMetrics().density;
         mEndButton = (Button) LayoutInflater.from(context).inflate(R.layout.showcase_button, null);
-
+        
         mShowcaseDrawer = new ClingDrawerImpl(getResources(), showcaseColor);
 
         // TODO: This isn't ideal, ClingDrawer and Calculator interfaces should be separate
         mTextDrawer = new TextDrawerImpl(metricScale, mShowcaseDrawer);
         mTextDrawer.setTitleStyling(context, titleTextAppearance);
         mTextDrawer.setDetailStyling(context, detailTextAppearance);
+        
 
         ConfigOptions options = new ConfigOptions();
         options.showcaseId = getId();
@@ -156,10 +162,10 @@ public class ShowcaseView extends RelativeLayout
             RelativeLayout.LayoutParams lps = getConfigOptions().buttonLayoutParams;
             if (lps == null) {
                 lps = (LayoutParams) generateDefaultLayoutParams();
-                lps.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-                lps.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-                int margin = ((Number) (metricScale * 12)).intValue();
-                lps.setMargins(margin, margin, margin, margin);
+                lps.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+                lps.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+                int margin = (int) metricScale * 12;
+                lps.setMargins(margin, (int) metricScale * 40, margin, margin);
             }
             mEndButton.setLayoutParams(lps);
             mEndButton.setText(
@@ -393,7 +399,11 @@ public class ShowcaseView extends RelativeLayout
 
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.HONEYCOMB && !mHasNoTarget) {
         	Path path = new Path();
-            path.addCircle(showcaseX, showcaseY, showcaseRadius, Path.Direction.CW);
+            path.addOval(new RectF(showcaseX-showcaseRadius*scaleXYMultiplier[0], 
+            					   showcaseY-showcaseRadius*scaleXYMultiplier[1],
+	                               showcaseX+showcaseRadius*scaleXYMultiplier[0], 
+	                               showcaseY+showcaseRadius*scaleXYMultiplier[1]), 
+            		               Path.Direction.CW);
             canvas.clipPath(path, Op.DIFFERENCE);
         }
 
@@ -402,17 +412,36 @@ public class ShowcaseView extends RelativeLayout
 
         // Draw the showcase drawable
         if (!mHasNoTarget) {
-            mShowcaseDrawer.drawShowcase(canvas, showcaseX, showcaseY, scaleMultiplier, showcaseRadius);
+            mShowcaseDrawer.drawShowcase(canvas, showcaseX, showcaseY, scaleXYMultiplier, showcaseRadius);
         }
 
         // Draw the text on the screen, recalculating its position if necessary
         if (recalculateText) {
-            mTextDrawer.calculateTextPosition(canvas.getWidth(), canvas.getHeight(), this);
+/*        	View button = this.getChildAt(0);
+        	if (button.getVisibility() == View.VISIBLE) {
+        		mTextDrawer.calculateTextPosition(canvas.getWidth(), button.getTop(), this);
+        	} else {*/
+        		mTextDrawer.calculateTextPosition(canvas.getWidth(), canvas.getHeight(), this);	
+//        	}
+            
         }
-        mTextDrawer.draw(canvas, recalculateText);
+        mTextDrawer.draw(canvas, recalculateText, mBackgroundColor);
+
+
+
 
         super.dispatchDraw(canvas);
 
+    }
+    
+    public RectF getClingRect() {
+    	if (this.findViewById(R.layout.handy) == null)
+            return new RectF(showcaseX-showcaseRadius*scaleXYMultiplier[0], 
+				   showcaseY-showcaseRadius*scaleXYMultiplier[1],
+                   showcaseX+showcaseRadius*scaleXYMultiplier[0], 
+                   showcaseY+showcaseRadius*scaleXYMultiplier[1]);
+    	else 
+            return new RectF(this.mShowcaseDrawer.getShowcaseRect());
     }
 
     /**
@@ -428,6 +457,10 @@ public class ShowcaseView extends RelativeLayout
             float offsetEndY) {
         animateGesture(offsetStartX, offsetStartY, offsetEndX, offsetEndY, false);
     }
+    
+    public void setViewSwitcher (ViewSwitcher v) {
+    	this.vSwitcher = v;
+    }
 
     /**
      * Adds an animated hand performing a gesture.
@@ -437,8 +470,8 @@ public class ShowcaseView extends RelativeLayout
      * @param endY                  y-coordinate or x-offset of the end position
      * @param absoluteCoordinates   If true, this will use absolute coordinates instead of coordinates relative to the center of the showcased view
      */
-    public void animateGesture(float startX, float startY, float endX,
-            float endY, boolean absoluteCoordinates) {
+    public void animateGesture(final float startX, final float startY, final float endX,
+            final float endY, final boolean absoluteCoordinates) {
         mHandy = ((LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE))
                 .inflate(R.layout.handy, null);
         addView(mHandy);
@@ -446,6 +479,7 @@ public class ShowcaseView extends RelativeLayout
             @Override
             public void onAnimationEnd() {
                 removeView(mHandy);
+ //               if (vSwitcher != null) vSwitcher.showNext();
             }
         });
     }
@@ -519,18 +553,23 @@ public class ShowcaseView extends RelativeLayout
 
     @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
+    	
+    	if (!mOptions.isTargetUntouchable) {
 
         float xDelta = Math.abs(motionEvent.getRawX() - showcaseX);
         float yDelta = Math.abs(motionEvent.getRawY() - showcaseY);
-        double distanceFromFocus = Math.sqrt(Math.pow(xDelta, 2) + Math.pow(yDelta, 2));
+   //     double distanceFromFocus = Math.sqrt(Math.pow(xDelta, 2) + Math.pow(yDelta, 2));
 
         if (MotionEvent.ACTION_UP == motionEvent.getAction() &&
-            mOptions.hideOnClickOutside && distanceFromFocus > showcaseRadius) {
+            mOptions.hideOnClickOutside && (xDelta > showcaseRadius*scaleXYMultiplier[0] | yDelta > showcaseRadius*scaleXYMultiplier[1])) {
             this.hide();
             return true;
         }
 
-        return mOptions.block && distanceFromFocus > showcaseRadius;
+        return mOptions.block && (xDelta > showcaseRadius*scaleXYMultiplier[0] | yDelta > showcaseRadius*scaleXYMultiplier[1]);
+    	} else {
+    		return mOptions.isTargetUntouchable;
+    	}
     }
 
     /**
@@ -833,6 +872,19 @@ public class ShowcaseView extends RelativeLayout
         sv.setText(title, detail);
         return sv;
     }
+    
+    public static ShowcaseView insertShowcaseView(Target target, AlertDialog dialog, String title, String detail, ConfigOptions options) {
+        ShowcaseView sv = new ShowcaseView (dialog.getContext());
+        sv.setConfigOptions(options);
+        if (sv.getConfigOptions().insert == INSERT_TO_DECOR) {
+            ((ViewGroup) dialog.getWindow().getDecorView()).addView(sv);
+        } else {
+            ((ViewGroup) dialog.findViewById(android.R.id.content)).addView(sv);
+        }
+        sv.setShowcase(target);
+        sv.setText(title, detail);
+        return sv;
+    }
 
     public static ShowcaseView insertShowcaseView(Target target, Activity activity) {
         return insertShowcaseViewInternal(target, activity, null, null, null);
@@ -855,9 +907,24 @@ public class ShowcaseView extends RelativeLayout
     }
 
     public static class ConfigOptions {
+    	
+    	public enum TextPosition {
+    		LEFT, TOP, RIGHT, BOTTOM, NOT_SPECIFIED;
+    		
+    		public static TextPosition fromInt(int i) {
+    			return TextPosition.values()[i];
+    		}
+
+    		public int toInt() { 
+    			return this.ordinal();
+    		}			
+    	}
 
         public boolean block = true, noButton = false;
         public boolean hideOnClickOutside = false;
+        public boolean isTargetUntouchable = false;
+        public TextPosition position = TextPosition.NOT_SPECIFIED;
+        
 
         /**
          * Does not work with the {@link ShowcaseViews} class as it does not make sense (only with
@@ -901,13 +968,22 @@ public class ShowcaseView extends RelativeLayout
          */
         public boolean centerText = false;
     }
-
-    public float getScaleMultiplier() {
-        return scaleMultiplier;
+    public float[] getScaleXYMultiplier() {
+        return scaleXYMultiplier;
     }
 
+    public void setScaleXYMultiplier(float[] scaleXYMultiplier) {
+        this.scaleXYMultiplier = scaleXYMultiplier;
+    }
+    
+/*    public float getScaleMultiplier() {
+        return scaleMultiplier;
+    }*/
+
     public void setScaleMultiplier(float scaleMultiplier) {
-        this.scaleMultiplier = scaleMultiplier;
+        this.scaleXYMultiplier[0] = scaleMultiplier;
+        this.scaleXYMultiplier[1] = scaleMultiplier;
+        
     }
 
 }

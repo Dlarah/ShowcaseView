@@ -4,9 +4,11 @@ import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.Log;
@@ -35,19 +37,39 @@ public class ClingDrawerImpl implements ClingDrawer {
     }
 
     @Override
-    public void drawShowcase(Canvas canvas, float x, float y, float scaleMultiplier, float radius) {
-        Matrix mm = new Matrix();
-        mm.postScale(scaleMultiplier, scaleMultiplier, x, y);
-        canvas.setMatrix(mm);
+    public void drawShowcase(Canvas canvas, float x, float y, float[] scaleXYMultiplier, float radius) {
+        canvas.scale(scaleXYMultiplier[0], scaleXYMultiplier[1], x, y);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-        	canvas.drawCircle(x, y, radius, mEraser);
+/*        	canvas.drawOval(new RectF(x-radius*scaleXYMultiplier[0], 
+            		                  y-radius*scaleXYMultiplier[1],
+            		                  x+radius*scaleXYMultiplier[0], 
+            		                  y+radius*scaleXYMultiplier[1]),
+            		                  mEraser);*/
+        	canvas.drawCircle(x, y, radius, mEraser);//
         }
-
+        
         mShowcaseDrawable.setBounds(mShowcaseRect);
         mShowcaseDrawable.draw(canvas);
 
         canvas.setMatrix(new Matrix());
+/*        Matrix mm = new Matrix();
+        mm.postScale(scaleXYMultiplier[0], scaleXYMultiplier[1], x, y);
+        canvas.setMatrix(mm);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+        	canvas.drawOval(new RectF(x-radius*scaleXYMultiplier[0], 
+            		                  y-radius*scaleXYMultiplier[1],
+            		                  x+radius*scaleXYMultiplier[0], 
+            		                  y+radius*scaleXYMultiplier[1]),
+            		                  mEraser);
+        	canvas.drawCircle(x, y, radius, mEraser);//
+        }
+        
+        mShowcaseDrawable.setBounds(mShowcaseRect);
+        mShowcaseDrawable.draw(canvas);
+
+        canvas.setMatrix(new Matrix());*/
     }
 
     @Override
@@ -66,6 +88,7 @@ public class ClingDrawerImpl implements ClingDrawer {
      *
      * @return true if voidedArea has changed, false otherwise.
      */
+
     public boolean calculateShowcaseRect(float x, float y) {
 
         if (mShowcaseRect == null) {
