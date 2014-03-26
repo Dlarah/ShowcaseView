@@ -84,7 +84,7 @@ public class TextDrawerImpl implements TextDrawer {
         return !TextUtils.isEmpty(mTitle) || !TextUtils.isEmpty(mDetails);
     }
     
-    public float[] getBestTextPosition() {//возвращает смещение по оси Х, смещение по оси Y и ширину текстового поля (не забывать что отступа слева нет) 
+    public float[] getBestTextPosition() {//returns offset of X and Y, the width of text field (dotn't forget text field has no left padding) 
         return mBestTextPosition;
     }
 
@@ -210,25 +210,25 @@ public class TextDrawerImpl implements TextDrawer {
 	    			largest = i;
 	    	}
 	    	switch(largest) {
-	    	case 0://текст слева от цели, 0-отступ по оси Х при рисовании 1-отступ по оси Y при рисовании 2-ширина текстового поля
+	    	case 0://left
 	    		mBestTextPosition[0] = 2 * PADDING * mDensityScale;
 	    		mBestTextPosition[1] = (PADDING + ACTIONBAR_PADDING) * mDensityScale;
 	  //  		mBestTextPosition[2] = showcase.left - 2 * PADDING * mDensityScale;
 	    		mBestTextPosition[2] = (int) showcaseView.getClingRect().left - 4 * PADDING * mDensityScale;
 	    		break;
-	    	case 1://текст сверху от цели
+	    	case 1://top
 	    		mBestTextPosition[0] = 2 * PADDING * mDensityScale;
 	    		mBestTextPosition[1] = (PADDING + ACTIONBAR_PADDING) * mDensityScale;
 	    		mBestTextPosition[2] = canvasW - 4 * PADDING * mDensityScale;
 	    		break;
-	    	case 2://текст справа от цели
+	    	case 2://right
 	 //   		mBestTextPosition[0] = showcase.right + 2 * PADDING * mDensityScale;
 	    		mBestTextPosition[0] = (int) showcaseView.getClingRect().right + 2 * PADDING * mDensityScale;
 	    		mBestTextPosition[1] = (PADDING + ACTIONBAR_PADDING) * mDensityScale;
 	 //   		mBestTextPosition[2] = (canvasW - showcase.right) - 2 * PADDING * mDensityScale;
 	    		mBestTextPosition[2] = (canvasW - (int) showcaseView.getClingRect().right) - 4 * PADDING * mDensityScale;
 	    		break;
-	    	case 3:// текст снизу от цели   		
+	    	case 3:// bottom  		
 	    		mBestTextPosition[0] = 2 * PADDING * mDensityScale;
 	 //   		mBestTextPosition[1] = showcase.bottom + PADDING * mDensityScale;
 	    		mBestTextPosition[1] = (int) showcaseView.getClingRect().bottom + PADDING * mDensityScale;
